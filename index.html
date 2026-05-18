@@ -102,6 +102,8 @@
   .grocery-item.done .grocery-check { background: transparent; border-color: #2a2a2a; }
   .grocery-text { font-family: var(--font-sans); font-size: 14px; color: #999; flex: 1; line-height: 1.4; }
   .grocery-item.done .grocery-text { text-decoration: line-through; color: #333; }
+  .desktop-only { display: none; }
+  @media (hover: hover) and (pointer: fine) { .desktop-only { display: block; } }
 
   /* SETUP */
   .setup-note { font-family: var(--font-sans); font-size: 12px; color: #444; line-height: 1.6; margin-bottom: 16px; }
@@ -191,7 +193,8 @@
         <button class="grocery-ctrl-btn" onclick="checkAll()">Check all</button>
       </div>
       <div id="groceryList"></div>
-      <button class="btn-primary" id="copyCheckedBtn" onclick="copyChecked()" style="margin-bottom:12px;">Copy checked items</button>
+      <button class="btn-primary" id="copyCheckedBtn" onclick="copyChecked()" style="margin-bottom:10px;">Copy checked items</button>
+      <button class="btn-ghost desktop-only" onclick="downloadWalmartCart()" style="width:100%;margin-bottom:12px;">Add to Walmart Cart ↓</button>
       <div class="btn-row">
         <button class="btn-ghost" onclick="showScreen('screenPlanning')">← Back to meals</button>
         <button class="btn-ghost" onclick="showScreen('screenHome')">Start over</button>
@@ -697,6 +700,26 @@ function copyChecked() {
     document.body.removeChild(ta);
     writeText();
   });
+}
+
+function downloadWalmartCart() {
+  const g = currentGroceries;
+  const items = [];
+  GROCERY_CATS.forEach(cat => {
+    (g[cat] || []).forEach((item, i) => {
+      if (!uncheckedItems.has(`${cat}-${i}`)) items.push(item);
+    });
+  });
+  const text = 'Open Cowork and say: Add these items to my Walmart cart\n\n' + items.join('\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'walmart-cart.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 </script>
 </body>
