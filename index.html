@@ -6,7 +6,7 @@
 <title>Weekly Table</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  
+
   :root {
     --bg: #0c0c0c;
     --card: #111;
@@ -20,7 +20,7 @@
   }
 
   body { background: var(--bg); color: var(--text); font-family: var(--font-serif); min-height: 100vh; padding: 0; }
-  
+
   .wrap { max-width: 680px; margin: 0 auto; padding: 32px 16px 80px; }
 
   /* HEADER */
@@ -49,7 +49,7 @@
   .btn-primary { display: block; width: 100%; border: none; border-radius: 10px; padding: 15px; font-family: var(--font-sans); font-size: 15px; font-weight: 600; cursor: pointer; color: #0c0c0c; background: var(--season); letter-spacing: 0.03em; transition: opacity 0.2s; }
   .btn-primary:disabled { opacity: 0.4; }
   .btn-ghost { background: transparent; color: #666; border: 1px solid #1e1e1e; border-radius: 10px; padding: 12px 16px; font-family: var(--font-sans); font-size: 13px; cursor: pointer; flex: 1; }
-  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-row { display: flex; gap: 10px; margin-top: 10px; }
 
   /* ERROR */
   .error-box { background: #1a0808; border: 1px solid #c0614a44; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; font-family: var(--font-sans); font-size: 12px; color: #c0614a; line-height: 1.6; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
@@ -71,7 +71,9 @@
   .method-txt { font-family: var(--font-sans); font-size: 11px; color: #444; }
   .new-badge { font-family: var(--font-sans); font-size: 10px; background: #c8a84b18; color: #c8a84b; padding: 3px 9px; border-radius: 100px; }
   .batch-badge { font-family: var(--font-sans); font-size: 10px; padding: 3px 9px; border-radius: 100px; font-weight: 600; }
-  .check-btn { width: 22px; height: 22px; border-radius: 6px; border: 1px solid #2a2a2a; background: transparent; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; color: #0c0c0c; margin-left: auto; }
+  .check-btn { width: 22px; height: 22px; border-radius: 6px; border: 1px solid #2a2a2a; background: transparent; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; color: #0c0c0c; }
+  .swap-btn { background: transparent; border: 1px solid #222; border-radius: 100px; color: #444; font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.06em; cursor: pointer; padding: 3px 10px; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+  .swap-btn:active { color: var(--season); border-color: var(--season); }
   .meal-name { font-family: var(--font-serif); font-size: 1rem; font-weight: 400; color: var(--text); margin-bottom: 6px; }
   .meal-meta { font-family: var(--font-sans); font-size: 12px; color: #444; display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
   .meal-meta .hot { color: #c0614a; }
@@ -82,6 +84,23 @@
   .steps-lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #333; margin-bottom: 10px; }
   .steps-list { padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
   .steps-list li { font-family: var(--font-sans); font-size: 13px; color: #777; line-height: 1.5; }
+
+  /* SWAP MODAL */
+  .swap-modal { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: flex-end; }
+  .swap-modal.hidden { display: none; }
+  .swap-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.75); }
+  .swap-panel { position: relative; background: #111; border-radius: 20px 20px 0 0; border: 1px solid #1e1e1e; border-bottom: none; max-height: 82vh; overflow-y: auto; padding: 20px 16px 48px; }
+  .swap-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .swap-title { font-size: 1.1rem; font-weight: 400; }
+  .swap-close { background: transparent; border: none; color: #555; font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; }
+  .swap-subtitle { font-family: var(--font-sans); font-size: 12px; color: #444; margin-bottom: 18px; }
+  .swap-loader { text-align: center; padding: 40px 20px; }
+  .swap-alt-card { background: #0f0f0f; border: 1px solid #1c1c1c; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; }
+  .swap-alt-info { flex: 1; min-width: 0; }
+  .swap-alt-name { font-family: var(--font-serif); font-size: 0.95rem; margin-bottom: 5px; }
+  .swap-alt-meta { font-family: var(--font-sans); font-size: 12px; color: #444; display: flex; gap: 10px; flex-wrap: wrap; }
+  .swap-pick-btn { flex-shrink: 0; background: transparent; border: 1px solid #2a2a2a; border-radius: 8px; color: #666; font-family: var(--font-sans); font-size: 12px; cursor: pointer; padding: 8px 14px; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .swap-pick-btn:active { background: var(--season); color: #0c0c0c; border-color: var(--season); }
 
   /* BATCH BANNER */
   .batch-banner { background: #0f0f0f; border: 1px solid; border-radius: 10px; padding: 13px 16px; margin-bottom: 16px; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; }
@@ -167,12 +186,13 @@
       <div id="batchBanner" class="batch-banner hidden"></div>
       <div class="sec-head">
         <div class="sec-title">This week's meals</div>
-        <p class="sec-note">Tap to expand steps · checkbox to deselect</p>
+        <p class="sec-note">Tap to expand steps · checkbox to deselect · ⇄ to swap</p>
       </div>
       <div id="mealGrid"></div>
+      <button class="btn-primary" id="groceryBtn" onclick="generateGroceries()" style="margin-bottom:10px;">Grocery List →</button>
       <div class="btn-row">
         <button class="btn-ghost" onclick="generateMealPlan()">↺ Regenerate</button>
-        <button class="btn-primary" id="groceryBtn" onclick="generateGroceries()" style="flex:2;">Grocery List → </button>
+        <button class="btn-ghost" onclick="startFresh()">Start fresh</button>
       </div>
     </div>
   </div>
@@ -217,6 +237,26 @@
 
 </div>
 
+<!-- SWAP MODAL (outside .wrap for correct fixed positioning) -->
+<div id="swapModal" class="swap-modal hidden">
+  <div class="swap-backdrop" onclick="closeSwapModal()"></div>
+  <div class="swap-panel">
+    <div class="swap-header">
+      <div class="swap-title">Find an alternative</div>
+      <button class="swap-close" onclick="closeSwapModal()">✕</button>
+    </div>
+    <p id="swapSubtitle" class="swap-subtitle"></p>
+    <div id="swapLoader" class="swap-loader">
+      <div class="spinner"></div>
+      <p class="loader-text">Finding alternatives...</p>
+    </div>
+    <div id="swapContent" class="hidden">
+      <div id="swapCards"></div>
+      <button class="btn-ghost" style="width:100%;margin-top:8px;" onclick="showMoreAlternatives()">Show me more →</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── SEASON ───────────────────────────────────────────────
 function getSeason() {
@@ -242,25 +282,35 @@ let selectedMeals = [];
 let expandedMeal = null;
 let currentGroceries = null;
 let uncheckedItems = new Set();
+let swapTargetIndex = null;
+let swapCurrentAlternatives = [];
 
 // ─── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Season color
   document.documentElement.style.setProperty('--season', seasonColor);
   document.getElementById('seasonPill').textContent = season + (grillAvailable ? ' · grill ✓' : ' · no grill');
 
-  // Pref tags
   const prefTags = ['Chicken & Beef','Seasonal Veg','Prep-Ahead','Batch Smart'];
   document.getElementById('prefTags').innerHTML = prefTags.map(t => `<span class="tag">${t}</span>`).join('');
   document.getElementById('methodTags').innerHTML = availableMethods.map(m => `<span class="method-tag">${methodIcons[m]||'🍴'} ${m}</span>`).join('');
 
-  // Check for API key
   let key;
   try { key = localStorage.getItem('wt_api_key'); } catch { key = null; }
-  if (key) {
-    showScreen('screenHome');
-  } else {
+  if (!key) {
     showScreen('screenSetup');
+    return;
+  }
+
+  // Load saved plan and go straight to planning screen if one exists
+  const saved = loadCurrentPlan();
+  if (saved && saved.meals && saved.meals.length > 0) {
+    currentMeals = saved.meals;
+    selectedMeals = currentMeals.map((_, i) => i);
+    expandedMeal = null;
+    showScreen('screenPlanning');
+    renderMeals(saved);
+  } else {
+    showScreen('screenHome');
   }
 });
 
@@ -278,9 +328,17 @@ function showSetup() {
   if (existing) document.getElementById('apiKeyInput').value = existing;
   showScreen('screenSetup');
 }
+
 function showHistory() {
   renderHistory();
   showScreen('screenHistory');
+}
+
+function startFresh() {
+  clearCurrentPlan();
+  currentMeals = [];
+  selectedMeals = [];
+  showScreen('screenHome');
 }
 
 // ─── API KEY ──────────────────────────────────────────────
@@ -303,6 +361,22 @@ function getKey() {
   try { return localStorage.getItem('wt_api_key') || ''; } catch { return ''; }
 }
 
+// ─── CURRENT PLAN PERSISTENCE ─────────────────────────────
+function saveCurrentPlan(parsed) {
+  try { localStorage.setItem('wt_current_plan', JSON.stringify(parsed)); } catch {}
+}
+
+function loadCurrentPlan() {
+  try {
+    const raw = localStorage.getItem('wt_current_plan');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function clearCurrentPlan() {
+  try { localStorage.removeItem('wt_current_plan'); } catch {}
+}
+
 // ─── MEAL HISTORY ─────────────────────────────────────────
 function getMealHistory() {
   try { return JSON.parse(localStorage.getItem('wt_meal_history') || '[]'); } catch { return []; }
@@ -312,7 +386,6 @@ function saveMealHistory(meals) {
   const history = getMealHistory();
   const week = { date: new Date().toISOString().slice(0,10), meals: meals.map(m => m.name) };
   history.unshift(week);
-  // Keep last 8 weeks
   localStorage.setItem('wt_meal_history', JSON.stringify(history.slice(0, 8)));
 }
 
@@ -356,17 +429,13 @@ function clearError() {
 
 // ─── JSON EXTRACT ─────────────────────────────────────────
 function extractJSON(text) {
-  // Strategy 1: direct parse
   try { return JSON.parse(text.trim()); } catch {}
 
-  // Strategy 2: unwrap a markdown code fence (```json ... ``` or ``` ... ```)
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (fenceMatch) {
     try { return JSON.parse(fenceMatch[1].trim()); } catch {}
   }
 
-  // Strategy 3: string-aware scan for the first complete { } or [ ] block.
-  // The old approach counted raw braces and broke on any { or } inside a string value.
   const src = fenceMatch ? fenceMatch[1].trim() : text.trim();
   const start = src.search(/[{[]/);
   if (start === -1) throw new Error('No JSON found in response');
@@ -376,18 +445,17 @@ function extractJSON(text) {
   let depth = 0, inStr = false, esc = false, end = -1;
   for (let i = start; i < src.length; i++) {
     const c = src[i];
-    if (esc)              { esc = false; continue; }
-    if (c === '\\' && inStr) { esc = true;  continue; }
-    if (c === '"')        { inStr = !inStr; continue; }
-    if (inStr)            { continue; }
-    if (c === opener)     { depth++; }
+    if (esc)               { esc = false; continue; }
+    if (c === '\\' && inStr) { esc = true; continue; }
+    if (c === '"')         { inStr = !inStr; continue; }
+    if (inStr)             { continue; }
+    if (c === opener)      { depth++; }
     else if (c === closer && --depth === 0) { end = i; break; }
   }
   if (end === -1) throw new Error('Malformed JSON: unmatched braces in response');
 
   const candidate = src.slice(start, end + 1);
   try { return JSON.parse(candidate); } catch (e) {
-    // Strategy 4: strip trailing commas before } or ] and retry
     const fixed = candidate.replace(/,(\s*[}\]])/g, '$1');
     try { return JSON.parse(fixed); } catch {
       throw new Error(`JSON parse failed: ${e.message}`);
@@ -410,7 +478,7 @@ async function callClaude(system, user) {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1500, system, messages: [{ role: 'user', content: user }] }),
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 4096, system, messages: [{ role: 'user', content: user }] }),
     });
   } catch {
     throw new Error('Network error — check your internet connection and try again.');
@@ -444,7 +512,7 @@ function getMealPlanPrompt() {
 
   return `You are a meal planning assistant for a busy family of 4. One cook. Return ONLY a raw JSON object with no markdown, no backticks, no explanation text before or after.
 
-PROTEINS: Mainly chicken and beef. Occasional pork and fish (each about once a month). 
+PROTEINS: Mainly chicken and beef. Occasional pork and fish (each about once a month).
 CHICKEN THIGHS: Always prepare shredded (slow cooker, braised, smoked pulled). Other chicken cuts (breasts, tenders) can be any preparation — grilled, seared, baked, piccata, nuggets, etc.
 VEGETABLES: green beans, asparagus, zucchini, squash, okra, peas, broccoli, cauliflower, Caesar salad, pasta salad, big green salads. Always include one per meal.
 CARBS: rice, sweet potatoes, white potatoes (roasted or mashed), pasta, bread.
@@ -459,6 +527,37 @@ ${recentStr}
 
 Return this exact JSON (3-4 meals):
 {"meals":[{"name":"string","protein":"chicken|beef|pork|fish","vegetable":"string","carb":"string","cookMethod":"string","backupMethod":"string or null","handsOnTime":30,"totalTime":45,"prepAhead":false,"prepNote":"string or null","isNew":false,"batchId":"string or null","batchNote":"string or null","steps":["string"]}],"batchWeek":false,"batchSummary":"string or null"}`;
+}
+
+function getSwapMealPrompt(mealIndex) {
+  const otherMeals = currentMeals.filter((_, i) => i !== mealIndex);
+  const otherProteins = [...new Set(otherMeals.map(m => m.protein))];
+  const otherNames = otherMeals.map(m => m.name);
+  const recent = getRecentMealNames();
+  const recentStr = recent.length ? `\nDO NOT suggest these recently cooked meals: ${recent.join(', ')}.` : '';
+  const seasonNote = season === 'summer' || season === 'spring'
+    ? 'Favor lighter meals, grilled proteins, fresh vegetables.'
+    : season === 'fall' ? 'Favor heartier meals, roasted vegetables, braises.'
+    : 'Favor comfort food, braises, slow cooker meals.';
+
+  return `You are a meal planning assistant for a busy family of 4. One cook. Return ONLY a raw JSON object with no markdown, no backticks, no explanation text before or after.
+
+Generate 2-3 alternative meals for a single meal slot. Each must be distinct from the others and from the meals already in this week's plan.
+
+ALREADY IN THIS WEEK'S PLAN (do not repeat): ${otherNames.join(', ')}
+PROTEINS ALREADY IN PLAN THIS WEEK: ${otherProteins.join(', ')} — try to use a different protein for variety if possible.${recentStr}
+
+PROTEINS: Mainly chicken and beef. Occasional pork and fish.
+CHICKEN THIGHS: Always prepare shredded (slow cooker, braised, smoked pulled). Other chicken cuts can be any preparation.
+VEGETABLES: green beans, asparagus, zucchini, squash, okra, peas, broccoli, cauliflower, Caesar salad, big green salads. Always include one.
+CARBS: rice, sweet potatoes, white potatoes, pasta, bread.
+COOKING: Available methods: ${availableMethods.join(', ')}.
+GRILL BACKUP: If grilled, also provide a backup method.
+TIME: Most meals under 45min hands-on.
+SEASON: ${season}. ${seasonNote}
+
+Return this exact JSON (2-3 alternatives):
+{"alternatives":[{"name":"string","protein":"chicken|beef|pork|fish","vegetable":"string","carb":"string","cookMethod":"string","backupMethod":"string or null","handsOnTime":30,"totalTime":45,"prepAhead":false,"prepNote":"string or null","isNew":false,"batchId":null,"batchNote":null,"steps":["string"]}]}`;
 }
 
 const GROCERY_PROMPT = `You are a grocery list assistant. Return ONLY a raw JSON object with no markdown, no backticks, no explanation.
@@ -493,9 +592,8 @@ async function generateMealPlan() {
     selectedMeals = currentMeals.map((_,i) => i);
     expandedMeal = null;
 
-    // Save to history immediately
     saveMealHistory(currentMeals);
-
+    saveCurrentPlan(parsed);
     renderMeals(parsed);
 
   } catch(e) {
@@ -504,8 +602,8 @@ async function generateMealPlan() {
   }
 }
 
+// ─── RENDER MEALS ─────────────────────────────────────────
 function renderMeals(parsed) {
-  // Batch banner
   const bb = document.getElementById('batchBanner');
   if (parsed.batchWeek && parsed.batchSummary) {
     bb.innerHTML = `<span style="color:${seasonColor};font-weight:600;">⚡ Batch week · </span><span style="color:#777;">${parsed.batchSummary}</span>`;
@@ -515,7 +613,6 @@ function renderMeals(parsed) {
     bb.classList.add('hidden');
   }
 
-  // Meal grid
   const grid = document.getElementById('mealGrid');
   grid.innerHTML = '';
   currentMeals.forEach((meal, i) => {
@@ -533,7 +630,10 @@ function renderMeals(parsed) {
           <span class="method-txt">${methodIcons[meal.cookMethod]||'🍴'} ${meal.cookMethod}${meal.backupMethod ? ' <span style="color:#2a2a2a">/ '+meal.backupMethod+'</span>' : ''}</span>
           ${meal.isNew ? '<span class="new-badge">✦ new</span>' : ''}
           ${isBatch ? `<span class="batch-badge" style="color:${seasonColor};background:${seasonColor}18">⚡ batch</span>` : ''}
-          <button class="check-btn" id="check-${i}" style="border-color:${color};background:${color}" onclick="toggleMeal(${i})">✓</button>
+          <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-shrink:0;">
+            <button class="swap-btn" onclick="event.stopPropagation();swapMeal(${i})">⇄ swap</button>
+            <button class="check-btn" id="check-${i}" style="border-color:${color};background:${color}" onclick="event.stopPropagation();toggleMeal(${i})">✓</button>
+          </div>
         </div>
         <div onclick="toggleExpand(${i})" style="cursor:pointer;">
           <div class="meal-name">${meal.name}</div>
@@ -559,6 +659,25 @@ function renderMeals(parsed) {
   updateGroceryBtn();
   document.getElementById('planningLoader').classList.add('hidden');
   document.getElementById('planningContent').classList.remove('hidden');
+}
+
+function restoreSelectionState(prevSelected) {
+  selectedMeals = prevSelected;
+  currentMeals.forEach((meal, i) => {
+    if (!prevSelected.includes(i)) {
+      const card = document.getElementById(`meal-${i}`);
+      const check = document.getElementById(`check-${i}`);
+      if (!card) return;
+      card.classList.add('deselected');
+      card.style.borderColor = '#1c1c1c';
+      if (check) {
+        check.style.background = 'transparent';
+        check.style.borderColor = '#2a2a2a';
+        check.textContent = '';
+      }
+    }
+  });
+  updateGroceryBtn();
 }
 
 function toggleMeal(i) {
@@ -597,6 +716,90 @@ function updateGroceryBtn() {
   btn.textContent = `Grocery List (${selectedMeals.length} meals) →`;
   btn.disabled = selectedMeals.length === 0;
 }
+
+// ─── SWAP MEAL ────────────────────────────────────────────
+function swapMeal(mealIndex) {
+  swapTargetIndex = mealIndex;
+  const meal = currentMeals[mealIndex];
+  document.getElementById('swapSubtitle').textContent = `Replacing: ${meal.name}`;
+  document.getElementById('swapCards').innerHTML = '';
+  document.getElementById('swapLoader').classList.remove('hidden');
+  document.getElementById('swapContent').classList.add('hidden');
+  document.getElementById('swapModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  fetchSwapAlternatives();
+}
+
+async function fetchSwapAlternatives() {
+  try {
+    const parsed = await callClaude(
+      getSwapMealPrompt(swapTargetIndex),
+      `Generate 2-3 alternative meals for the ${season} season. Available cooking: ${availableMethods.join(', ')}.`
+    );
+    if (!parsed.alternatives || !Array.isArray(parsed.alternatives)) throw new Error('Response missing alternatives array');
+    swapCurrentAlternatives = parsed.alternatives;
+    renderSwapAlternatives(swapCurrentAlternatives);
+  } catch(e) {
+    closeSwapModal();
+    showError(e.message);
+  }
+}
+
+function showMoreAlternatives() {
+  document.getElementById('swapCards').innerHTML = '';
+  document.getElementById('swapLoader').classList.remove('hidden');
+  document.getElementById('swapContent').classList.add('hidden');
+  fetchSwapAlternatives();
+}
+
+function renderSwapAlternatives(alternatives) {
+  const container = document.getElementById('swapCards');
+  container.innerHTML = alternatives.map((meal, i) => {
+    const color = proteinColors[meal.protein] || '#7c9e6b';
+    return `
+      <div class="swap-alt-card" style="border-left: 3px solid ${color}66;">
+        <div class="swap-alt-info">
+          <div class="swap-alt-name">${meal.name}</div>
+          <div class="swap-alt-meta">
+            <span style="color:${color}">${meal.protein}</span>
+            <span>${methodIcons[meal.cookMethod]||'🍴'} ${meal.cookMethod}</span>
+            <span>👋 ${meal.handsOnTime}min</span>
+            <span>🥦 ${meal.vegetable}</span>
+          </div>
+        </div>
+        <button class="swap-pick-btn" onclick="pickAlternative(${i})">Pick →</button>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('swapLoader').classList.add('hidden');
+  document.getElementById('swapContent').classList.remove('hidden');
+}
+
+function pickAlternative(altIndex) {
+  const newMeal = swapCurrentAlternatives[altIndex];
+  currentMeals[swapTargetIndex] = newMeal;
+
+  const savedPlan = loadCurrentPlan() || { batchWeek: false, batchSummary: null };
+  const updatedPlan = { ...savedPlan, meals: currentMeals };
+  saveCurrentPlan(updatedPlan);
+
+  const prevSelected = [...selectedMeals];
+  closeSwapModal();
+  renderMeals(updatedPlan);
+  restoreSelectionState(prevSelected);
+}
+
+function closeSwapModal() {
+  document.getElementById('swapModal').classList.add('hidden');
+  document.body.style.overflow = '';
+  swapTargetIndex = null;
+}
+
+// Close swap modal on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSwapModal();
+});
 
 // ─── GENERATE GROCERIES ───────────────────────────────────
 async function generateGroceries() {
