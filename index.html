@@ -514,7 +514,7 @@ function getMealPlanPrompt() {
 
 PROTEINS: Mainly chicken and beef. Occasional pork and fish (each about once a month).
 CHICKEN THIGHS: Always prepare shredded (slow cooker, braised, smoked pulled). Other chicken cuts (breasts, tenders) can be any preparation — grilled, seared, baked, piccata, nuggets, etc.
-VEGETABLES: green beans, asparagus, zucchini, squash, okra, peas, broccoli, cauliflower, Caesar salad, pasta salad, big green salads. Always include one per meal.
+VEGETABLES: green beans, asparagus, zucchini, squash, okra, peas, broccoli, cauliflower, Caesar salad, big green salads. Always include one per meal. For one-pot and casserole dishes that do not naturally contain a distinct vegetable, always add a complementary green vegetable side (green beans, peas, broccoli, asparagus, etc.) and list it in the vegetable field.
 CARBS: rice, sweet potatoes, white potatoes (roasted or mashed), pasta, bread.
 COOKING: Available methods: ${availableMethods.join(', ')}. Multistep meals fine (marinate overnight, sear then oven finish, etc).
 GRILL BACKUP: If a meal is grilled, also provide a backup method (stovetop or griddle first, oven if needed).
@@ -523,6 +523,13 @@ TIME: Most meals under 45min hands-on. ONE meal per week may exceed 60min hands-
 BATCH: About once a month suggest cooking one protein in bulk for 2 meals. Mark both with matching batchId string and batchNote.
 PREP AHEAD: Flag meals where day-before prep helps. Afternoons are busy — final step should be simple reheating or quick finish.
 SEASON: ${season}. ${seasonNote}
+
+ONE-POT MEALS & CASSEROLES: The following are established family favorites. Include one of them roughly once a month — do NOT include more than one per week and do NOT include them every week. If the user's notes specifically request one of these (or ask for a casserole, one-pot, or easy dinner), include it that week regardless of recency.
+- Spaghetti and Meatballs (protein: beef, cookMethod: stovetop, carb: pasta — the dish itself has no standalone vegetable, so always add a Caesar salad or big green salad as the vegetable side)
+- Poppy Seed Chicken (protein: chicken, cookMethod: oven, carb: rice or egg noodles — creamy casserole, no built-in vegetable, so always add green beans or peas as the vegetable side)
+- Ravioli Bake (protein: beef, cookMethod: oven, carb: pasta — layered with meat sauce and mozzarella; no built-in vegetable, so always add a Caesar salad or big green salad as the vegetable side)
+- Beef Stroganoff (protein: beef, cookMethod: stovetop, carb: egg noodles — no built-in vegetable, so always add green beans or peas as the vegetable side)
+- Pasta Salad with Chicken (protein: chicken, cookMethod: stovetop, carb: pasta — SPRING AND SUMMER ONLY, cold dish served chilled; the vegetable field should describe the fresh mix-ins such as bell pepper, cucumber, olives, cherry tomatoes)
 ${recentStr}
 
 Return this exact JSON (3-4 meals):
@@ -549,12 +556,19 @@ PROTEINS ALREADY IN PLAN THIS WEEK: ${otherProteins.join(', ')} — try to use a
 
 PROTEINS: Mainly chicken and beef. Occasional pork and fish.
 CHICKEN THIGHS: Always prepare shredded (slow cooker, braised, smoked pulled). Other chicken cuts can be any preparation.
-VEGETABLES: green beans, asparagus, zucchini, squash, okra, peas, broccoli, cauliflower, Caesar salad, big green salads. Always include one.
+VEGETABLES: green beans, asparagus, zucchini, squash, okra, peas, broccoli, cauliflower, Caesar salad, big green salads. Always include one. For one-pot and casserole dishes that do not naturally contain a vegetable, always add a complementary green vegetable side.
 CARBS: rice, sweet potatoes, white potatoes, pasta, bread.
 COOKING: Available methods: ${availableMethods.join(', ')}.
 GRILL BACKUP: If grilled, also provide a backup method.
 TIME: Most meals under 45min hands-on.
 SEASON: ${season}. ${seasonNote}
+
+ONE-POT MEALS & CASSEROLES: You may suggest one of these as an alternative if it fits the week (not already used, different protein preferred). Each requires a vegetable side as noted:
+- Spaghetti and Meatballs (beef, stovetop, pasta — add Caesar or green salad)
+- Poppy Seed Chicken (chicken, oven, rice or egg noodles — add green beans or peas)
+- Ravioli Bake (beef, oven, pasta — add Caesar or green salad)
+- Beef Stroganoff (beef, stovetop, egg noodles — add green beans or peas)
+- Pasta Salad with Chicken (chicken, stovetop, pasta — SPRING/SUMMER ONLY, cold dish)
 
 Return this exact JSON (2-3 alternatives):
 {"alternatives":[{"name":"string","protein":"chicken|beef|pork|fish","vegetable":"string","carb":"string","cookMethod":"string","backupMethod":"string or null","handsOnTime":30,"totalTime":45,"prepAhead":false,"prepNote":"string or null","isNew":false,"batchId":null,"batchNote":null,"steps":["string"]}]}`;
