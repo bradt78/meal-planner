@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Weekly Table</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  
+  :root {
+    --bg: #0c0c0c;
+    --card: #111;
+    --border: #1e1e1e;
+    --text: #f0ece4;
+    --muted: #666;
+    --dim: #333;
+    --season: #7eb87e;
+    --font-serif: Georgia, 'Times New Roman', serif;
+    --font-sans: -apple-system, system-ui, sans-serif;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--font-serif); min-height: 100vh; padding: 0; }
+  
+  .wrap { max-width: 680px; margin: 0 auto; padding: 32px 16px 80px; }
+
+  /* HEADER */
+  header { text-align: center; margin-bottom: 36px; }
+  .season-pill { display: inline-block; font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; border: 1px solid; border-radius: 100px; padding: 4px 14px; margin-bottom: 12px; color: var(--season); border-color: color-mix(in srgb, var(--season) 40%, transparent); }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 400; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .sub { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #444; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; margin-bottom: 16px; }
+  .card-title { font-size: 1.2rem; font-weight: 400; margin-bottom: 8px; }
+  .card-desc { font-family: var(--font-sans); font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+
+  /* TAGS */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .tag { font-family: var(--font-sans); font-size: 11px; padding: 4px 11px; border-radius: 100px; border: 1px solid #222; color: #777; background: #161616; }
+  .method-tag { font-family: var(--font-sans); font-size: 11px; padding: 4px 11px; border-radius: 6px; border: 1px solid #1c1c1c; color: #555; background: #0f0f0f; }
+
+  /* INPUTS */
+  label { font-family: var(--font-sans); font-size: 11px; color: #444; display: block; margin-bottom: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+  input, textarea { width: 100%; background: var(--bg); border: 1px solid #222; border-radius: 8px; color: var(--text); font-family: var(--font-sans); font-size: 15px; padding: 12px 14px; outline: none; line-height: 1.5; margin-bottom: 16px; -webkit-appearance: none; }
+  textarea { resize: vertical; }
+  input:focus, textarea:focus { border-color: var(--season); }
+
+  /* BUTTONS */
+  .btn-primary { display: block; width: 100%; border: none; border-radius: 10px; padding: 15px; font-family: var(--font-sans); font-size: 15px; font-weight: 600; cursor: pointer; color: #0c0c0c; background: var(--season); letter-spacing: 0.03em; transition: opacity 0.2s; }
+  .btn-primary:disabled { opacity: 0.4; }
+  .btn-ghost { background: transparent; color: #666; border: 1px solid #1e1e1e; border-radius: 10px; padding: 12px 16px; font-family: var(--font-sans); font-size: 13px; cursor: pointer; flex: 1; }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+
+  /* ERROR */
+  .error-box { background: #1a0808; border: 1px solid #c0614a44; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; font-family: var(--font-sans); font-size: 12px; color: #c0614a; line-height: 1.6; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .error-x { background: transparent; border: none; color: #c0614a; cursor: pointer; font-size: 16px; flex-shrink: 0; padding: 0; line-height: 1; }
+
+  /* LOADER */
+  .loader { text-align: center; padding: 60px 20px; }
+  .spinner { width: 32px; height: 32px; border: 2px solid #1e1e1e; border-top-color: var(--season); border-radius: 50%; margin: 0 auto 16px; animation: spin 0.8s linear infinite; }
+  .loader-text { font-family: var(--font-sans); font-size: 13px; color: #555; letter-spacing: 0.08em; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MEAL CARDS */
+  .meal-card { background: #0f0f0f; border: 1px solid #1c1c1c; border-radius: 12px; display: flex; overflow: hidden; margin-bottom: 10px; transition: border-color 0.2s, opacity 0.2s; }
+  .meal-card.deselected { opacity: 0.35; }
+  .meal-accent { width: 3px; flex-shrink: 0; }
+  .meal-body { padding: 14px 16px; flex: 1; min-width: 0; }
+  .meal-top { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+  .badge { font-family: var(--font-sans); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 9px; border-radius: 100px; }
+  .method-txt { font-family: var(--font-sans); font-size: 11px; color: #444; }
+  .new-badge { font-family: var(--font-sans); font-size: 10px; background: #c8a84b18; color: #c8a84b; padding: 3px 9px; border-radius: 100px; }
+  .batch-badge { font-family: var(--font-sans); font-size: 10px; padding: 3px 9px; border-radius: 100px; font-weight: 600; }
+  .check-btn { width: 22px; height: 22px; border-radius: 6px; border: 1px solid #2a2a2a; background: transparent; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; color: #0c0c0c; margin-left: auto; }
+  .meal-name { font-family: var(--font-serif); font-size: 1rem; font-weight: 400; color: var(--text); margin-bottom: 6px; }
+  .meal-meta { font-family: var(--font-sans); font-size: 12px; color: #444; display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .meal-meta .hot { color: #c0614a; }
+  .prep-note { font-family: var(--font-sans); font-size: 12px; color: #4a4a4a; font-style: italic; margin-top: 6px; }
+  .batch-note { font-family: var(--font-sans); font-size: 12px; color: #555; margin-top: 5px; }
+  .expand-btn { margin-top: 10px; background: transparent; border: none; color: #333; font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.07em; cursor: pointer; padding: 0; }
+  .steps-block { margin-top: 14px; padding-top: 14px; border-top: 1px solid #1a1a1a; }
+  .steps-lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #333; margin-bottom: 10px; }
+  .steps-list { padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .steps-list li { font-family: var(--font-sans); font-size: 13px; color: #777; line-height: 1.5; }
+
+  /* BATCH BANNER */
+  .batch-banner { background: #0f0f0f; border: 1px solid; border-radius: 10px; padding: 13px 16px; margin-bottom: 16px; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; }
+
+  /* SECTION HEAD */
+  .sec-head { margin-bottom: 16px; }
+  .sec-title { font-size: 1.2rem; font-weight: 400; margin-bottom: 4px; }
+  .sec-note { font-family: var(--font-sans); font-size: 11px; color: #333; letter-spacing: 0.04em; }
+
+  /* STORE CARDS */
+  .store-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+  @media(min-width: 560px) { .store-grid { grid-template-columns: 1fr 1fr; } }
+  .store-card { background: #0f0f0f; border: 1px solid; border-radius: 12px; overflow: hidden; }
+  .store-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid #161616; }
+  .store-name { font-family: var(--font-sans); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .store-sub { font-family: var(--font-sans); font-size: 10px; color: #333; }
+  .copy-btn { background: transparent; border: 1px solid; border-radius: 6px; padding: 6px 12px; font-family: var(--font-sans); font-size: 11px; cursor: pointer; }
+  .item-list { list-style: none; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .item-list li { font-family: var(--font-sans); font-size: 13px; color: #999; display: flex; align-items: center; gap: 10px; }
+  .item-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; opacity: 0.5; }
+
+  /* SETUP */
+  .setup-note { font-family: var(--font-sans); font-size: 12px; color: #444; line-height: 1.6; margin-bottom: 16px; }
+  .history-item { font-family: var(--font-sans); font-size: 12px; color: #555; padding: 6px 0; border-bottom: 1px solid #161616; }
+  .history-item:last-child { border-bottom: none; }
+
+  /* HIDDEN */
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="season-pill" id="seasonPill">spring · grill ✓</div>
+    <h1>Weekly Table</h1>
+    <p class="sub">meal planning for your family</p>
+  </header>
+
+  <div id="errorBox" class="error-box hidden">
+    <span id="errorText"></span>
+    <button class="error-x" onclick="clearError()">✕</button>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <div id="screenSetup">
+    <div class="card">
+      <div class="card-title">Welcome</div>
+      <p class="card-desc">Enter your Anthropic API key to get started. It's saved only to this device and never shared.</p>
+      <label>Anthropic API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <p class="setup-note">Get a key at console.anthropic.com → API Keys. Costs pennies per week.</p>
+      <button class="btn-primary" onclick="saveKey()">Save & Continue →</button>
+    </div>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div id="screenHome" class="hidden">
+    <div class="card">
+      <div class="card-title">Plan this week</div>
+      <p class="card-desc">3–4 meals built around your family's rhythm. Prep-ahead flagged. Batch cooking suggested when it makes sense.</p>
+      <div class="tag-row" id="prefTags"></div>
+      <div class="tag-row" id="methodTags"></div>
+      <label style="margin-top:12px;">Notes for this week (optional)</label>
+      <textarea id="notesInput" rows="3" placeholder="e.g. want something on the smoker, skip fish, have zucchini to use..."></textarea>
+      <button class="btn-primary" id="generateBtn" onclick="generateMealPlan()">Generate Meal Plan →</button>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="showHistory()">View meal history</button>
+        <button class="btn-ghost" onclick="showSetup()">API key settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLANNING SCREEN -->
+  <div id="screenPlanning" class="hidden">
+    <div id="planningLoader" class="loader">
+      <div class="spinner"></div>
+      <p class="loader-text">Planning your week...</p>
+    </div>
+    <div id="planningContent" class="hidden">
+      <div id="batchBanner" class="batch-banner hidden"></div>
+      <div class="sec-head">
+        <div class="sec-title">This week's meals</div>
+        <p class="sec-note">Tap to expand steps · checkbox to deselect</p>
+      </div>
+      <div id="mealGrid"></div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="generateMealPlan()">↺ Regenerate</button>
+        <button class="btn-primary" id="groceryBtn" onclick="generateGroceries()" style="flex:2;">Grocery List → </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROCERIES SCREEN -->
+  <div id="screenGroceries" class="hidden">
+    <div id="groceryLoader" class="loader">
+      <div class="spinner"></div>
+      <p class="loader-text">Building your grocery list...</p>
+    </div>
+    <div id="groceryContent" class="hidden">
+      <div class="sec-head">
+        <div class="sec-title">Your grocery list</div>
+        <p class="sec-note">Copy and paste into your store's app</p>
+      </div>
+      <div class="store-grid" id="storeGrid"></div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="showScreen('screenPlanning')">← Back to meals</button>
+        <button class="btn-ghost" onclick="showScreen('screenHome')">Start over</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY SCREEN -->
+  <div id="screenHistory" class="hidden">
+    <div class="card">
+      <div class="card-title">Meal history</div>
+      <p class="card-desc">Meals logged automatically each week so nothing repeats too soon.</p>
+      <div id="historyList"></div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn-ghost" onclick="showScreen('screenHome')">← Back</button>
+        <button class="btn-ghost" onclick="clearHistory()">Clear history</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── SEASON ───────────────────────────────────────────────
+function getSeason() {
+  const m = new Date().getMonth() + 1;
+  if (m >= 3 && m <= 5) return 'spring';
+  if (m >= 6 && m <= 8) return 'summer';
+  if (m >= 9 && m <= 11) return 'fall';
+  return 'winter';
+}
+
+const season = getSeason();
+const grillAvailable = season !== 'winter';
+const seasonColors = { spring: '#7eb87e', summer: '#d4a847', fall: '#c0614a', winter: '#5a9cbf' };
+const seasonColor = seasonColors[season];
+const proteinColors = { chicken: '#d4a847', beef: '#c0614a', pork: '#e8927c', fish: '#5a9cbf' };
+const methodIcons = { grill: '🔥', smoker: '💨', oven: '🫙', stovetop: '🍳', griddle: '🥞', 'slow cooker': '🫕' };
+const availableMethods = ['oven','stovetop','griddle','smoker','slow cooker'];
+if (grillAvailable) availableMethods.push('grill');
+
+// ─── STATE ────────────────────────────────────────────────
+let currentMeals = [];
+let selectedMeals = [];
+let expandedMeal = null;
+let currentGroceries = null;
+
+// ─── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Season color
+  document.documentElement.style.setProperty('--season', seasonColor);
+  document.getElementById('seasonPill').textContent = season + (grillAvailable ? ' · grill ✓' : ' · no grill');
+
+  // Pref tags
+  const prefTags = ['Chicken & Beef','Seasonal Veg','Prep-Ahead','Batch Smart'];
+  document.getElementById('prefTags').innerHTML = prefTags.map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('methodTags').innerHTML = availableMethods.map(m => `<span class="method-tag">${methodIcons[m]||'🍴'} ${m}</span>`).join('');
+
+  // Check for API key
+  const key = localStorage.getItem('wt_api_key');
+  if (key) {
+    showScreen('screenHome');
+  } else {
+    showScreen('screenSetup');
+  }
+});
+
+// ─── SCREENS ──────────────────────────────────────────────
+function showScreen(id) {
+  ['screenSetup','screenHome','screenPlanning','screenGroceries','screenHistory'].forEach(s => {
+    document.getElementById(s).classList.add('hidden');
+  });
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+function showSetup() { showScreen('screenSetup'); }
+function showHistory() {
+  renderHistory();
+  showScreen('screenHistory');
+}
+
+// ─── API KEY ──────────────────────────────────────────────
+function saveKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    showError('That doesn\'t look like a valid Anthropic API key. It should start with sk-ant-');
+    return;
+  }
+  localStorage.setItem('wt_api_key', key);
+  showScreen('screenHome');
+}
+
+function getKey() {
+  return localStorage.getItem('wt_api_key') || '';
+}
+
+// ─── MEAL HISTORY ─────────────────────────────────────────
+function getMealHistory() {
+  try { return JSON.parse(localStorage.getItem('wt_meal_history') || '[]'); } catch { return []; }
+}
+
+function saveMealHistory(meals) {
+  const history = getMealHistory();
+  const week = { date: new Date().toISOString().slice(0,10), meals: meals.map(m => m.name) };
+  history.unshift(week);
+  // Keep last 8 weeks
+  localStorage.setItem('wt_meal_history', JSON.stringify(history.slice(0, 8)));
+}
+
+function getRecentMealNames() {
+  const history = getMealHistory();
+  return history.flatMap(w => w.meals);
+}
+
+function renderHistory() {
+  const history = getMealHistory();
+  const el = document.getElementById('historyList');
+  if (!history.length) {
+    el.innerHTML = '<p style="font-family:system-ui;font-size:13px;color:#444;">No meals logged yet. Generate your first meal plan to start tracking.</p>';
+    return;
+  }
+  el.innerHTML = history.map(w => `
+    <div style="margin-bottom:14px;">
+      <p style="font-family:system-ui;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#333;margin-bottom:6px;">${w.date}</p>
+      ${w.meals.map(m => `<div class="history-item">${m}</div>`).join('')}
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  if (confirm('Clear all meal history?')) {
+    localStorage.removeItem('wt_meal_history');
+    renderHistory();
+  }
+}
+
+// ─── ERROR ────────────────────────────────────────────────
+function showError(msg) {
+  document.getElementById('errorText').textContent = msg;
+  document.getElementById('errorBox').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+function clearError() {
+  document.getElementById('errorBox').classList.add('hidden');
+}
+
+// ─── JSON EXTRACT ─────────────────────────────────────────
+function extractJSON(text) {
+  const stripped = text.replace(/```json/gi,'').replace(/```/g,'').trim();
+  const start = stripped.indexOf('{');
+  if (start === -1) throw new Error('No JSON found in response');
+  let depth = 0, end = -1;
+  for (let i = start; i < stripped.length; i++) {
+    if (stripped[i] === '{') depth++;
+    else if (stripped[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  if (end === -1) throw new Error('Malformed JSON in response');
+  return JSON.parse(stripped.slice(start, end+1));
+}
+
+// ─── API CALL ─────────────────────────────────────────────
+async function callClaude(system, user) {
+  const key = getKey();
+  if (!key) { showError('No API key found. Please add your key in settings.'); throw new Error('No key'); }
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, system, messages: [{ role: 'user', content: user }] }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`API error ${res.status}: ${body.slice(0,200)}`);
+  }
+
+  const data = await res.json();
+  const text = data?.content?.[0]?.text;
+  if (!text) throw new Error('Empty response from API');
+  return extractJSON(text);
+}
+
+// ─── PROMPTS ──────────────────────────────────────────────
+function getMealPlanPrompt() {
+  const recent = getRecentMealNames();
+  const recentStr = recent.length ? `Do NOT suggest these recently cooked meals: ${recent.join(', ')}.` : '';
+  const seasonNote = season === 'summer' || season === 'spring'
+    ? 'Favor lighter meals, grilled proteins, fresh vegetables, salads.'
+    : season === 'fall' ? 'Favor heartier meals, roasted vegetables, braises.'
+    : 'Favor comfort food, braises, slow cooker meals.';
+
+  return `You are a meal planning assistant for a busy family of 4. One cook. Return ONLY a raw JSON object with no markdown, no backticks, no explanation text before or after.
+
+PROTEINS: Mainly chicken and beef. Occasional pork and fish (each about once a month). 
+CHICKEN THIGHS: Always prepare shredded (slow cooker, braised, smoked pulled). Other chicken cuts (breasts, tenders) can be any preparation — grilled, seared, baked, piccata, nuggets, etc.
+VEGETABLES: green beans, asparagus, zucchini, squash, okra, peas, broccoli, cauliflower, Caesar salad, pasta salad, big green salads. Always include one per meal.
+CARBS: rice, sweet potatoes, white potatoes (roasted or mashed), pasta, bread.
+COOKING: Available methods: ${availableMethods.join(', ')}. Multistep meals fine (marinate overnight, sear then oven finish, etc).
+GRILL BACKUP: If a meal is grilled, also provide a backup method (stovetop or griddle first, oven if needed).
+SMOKER: Available year-round but suggest at most once this week.
+TIME: Most meals under 45min hands-on. ONE meal per week may exceed 60min hands-on. Passive cook time (smoker, slow cooker, oven) does not count as hands-on.
+BATCH: About once a month suggest cooking one protein in bulk for 2 meals. Mark both with matching batchId string and batchNote.
+PREP AHEAD: Flag meals where day-before prep helps. Afternoons are busy — final step should be simple reheating or quick finish.
+SEASON: ${season}. ${seasonNote}
+${recentStr}
+
+Return this exact JSON (3-4 meals):
+{"meals":[{"name":"string","protein":"chicken|beef|pork|fish","vegetable":"string","carb":"string","cookMethod":"string","backupMethod":"string or null","handsOnTime":30,"totalTime":45,"prepAhead":false,"prepNote":"string or null","isNew":false,"batchId":"string or null","batchNote":"string or null","steps":["string"]}],"batchWeek":false,"batchSummary":"string or null"}`;
+}
+
+const GROCERY_PROMPT = `You are a grocery list assistant. Return ONLY a raw JSON object with no markdown, no backticks, no explanation.
+Walmart = pantry staples, canned goods, packaged goods, dairy, dry goods, condiments, spices.
+Whole Foods = fresh vegetables, fresh meat, fresh fish, fresh herbs, specialty fresh items.
+Return: {"walmart":["item (qty)"],"wholeFoods":["item (qty)"]}`;
+
+// ─── GENERATE MEAL PLAN ───────────────────────────────────
+async function generateMealPlan() {
+  clearError();
+  showScreen('screenPlanning');
+  document.getElementById('planningLoader').classList.remove('hidden');
+  document.getElementById('planningContent').classList.add('hidden');
+
+  try {
+    const notes = document.getElementById('notesInput')?.value || '';
+    const parsed = await callClaude(
+      getMealPlanPrompt(),
+      `Generate a ${season} meal plan for this week. Available cooking: ${availableMethods.join(', ')}.${notes ? ' Notes: ' + notes : ''}`
+    );
+
+    if (!parsed.meals || !Array.isArray(parsed.meals)) throw new Error('Response missing meals array');
+
+    currentMeals = parsed.meals;
+    selectedMeals = currentMeals.map((_,i) => i);
+    expandedMeal = null;
+
+    // Save to history immediately
+    saveMealHistory(currentMeals);
+
+    renderMeals(parsed);
+
+  } catch(e) {
+    showError(e.message);
+    showScreen('screenHome');
+  }
+}
+
+function renderMeals(parsed) {
+  // Batch banner
+  const bb = document.getElementById('batchBanner');
+  if (parsed.batchWeek && parsed.batchSummary) {
+    bb.innerHTML = `<span style="color:${seasonColor};font-weight:600;">⚡ Batch week · </span><span style="color:#777;">${parsed.batchSummary}</span>`;
+    bb.style.borderColor = seasonColor + '44';
+    bb.classList.remove('hidden');
+  } else {
+    bb.classList.add('hidden');
+  }
+
+  // Meal grid
+  const grid = document.getElementById('mealGrid');
+  grid.innerHTML = '';
+  currentMeals.forEach((meal, i) => {
+    const color = proteinColors[meal.protein] || '#7c9e6b';
+    const isBatch = meal.batchId !== null && meal.batchId !== undefined && meal.batchId !== 'null';
+    const div = document.createElement('div');
+    div.className = 'meal-card';
+    div.id = `meal-${i}`;
+    div.style.borderColor = color + '55';
+    div.innerHTML = `
+      <div class="meal-accent" style="background:${color}"></div>
+      <div class="meal-body">
+        <div class="meal-top">
+          <span class="badge" style="background:${color}20;color:${color}">${meal.protein}</span>
+          <span class="method-txt">${methodIcons[meal.cookMethod]||'🍴'} ${meal.cookMethod}${meal.backupMethod ? ' <span style="color:#2a2a2a">/ '+meal.backupMethod+'</span>' : ''}</span>
+          ${meal.isNew ? '<span class="new-badge">✦ new</span>' : ''}
+          ${isBatch ? `<span class="batch-badge" style="color:${seasonColor};background:${seasonColor}18">⚡ batch</span>` : ''}
+          <button class="check-btn" id="check-${i}" style="border-color:${color};background:${color}" onclick="toggleMeal(${i})">✓</button>
+        </div>
+        <div onclick="toggleExpand(${i})" style="cursor:pointer;">
+          <div class="meal-name">${meal.name}</div>
+          <div class="meal-meta">
+            <span>🥦 ${meal.vegetable}</span>
+            <span>🍚 ${meal.carb}</span>
+            <span ${meal.handsOnTime > 60 ? 'class="hot"' : ''}>👋 ${meal.handsOnTime}min</span>
+            ${meal.totalTime > meal.handsOnTime ? `<span style="color:#2a2a2a">⏱ ${meal.totalTime}min total</span>` : ''}
+          </div>
+          ${meal.prepAhead && meal.prepNote ? `<p class="prep-note">⏮ ${meal.prepNote}</p>` : ''}
+          ${isBatch && meal.batchNote ? `<p class="batch-note">⚡ ${meal.batchNote}</p>` : ''}
+        </div>
+        <div class="steps-block hidden" id="steps-${i}">
+          <p class="steps-lbl">How to make it</p>
+          <ol class="steps-list">${(meal.steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
+        </div>
+        <button class="expand-btn" id="expbtn-${i}" onclick="toggleExpand(${i})">▼ show steps</button>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+
+  updateGroceryBtn();
+  document.getElementById('planningLoader').classList.add('hidden');
+  document.getElementById('planningContent').classList.remove('hidden');
+}
+
+function toggleMeal(i) {
+  const idx = selectedMeals.indexOf(i);
+  const card = document.getElementById(`meal-${i}`);
+  const check = document.getElementById(`check-${i}`);
+  const color = proteinColors[currentMeals[i]?.protein] || '#7c9e6b';
+  if (idx === -1) {
+    selectedMeals.push(i);
+    card.classList.remove('deselected');
+    card.style.borderColor = color + '55';
+    check.style.background = color;
+    check.style.borderColor = color;
+    check.textContent = '✓';
+  } else {
+    selectedMeals.splice(idx,1);
+    card.classList.add('deselected');
+    card.style.borderColor = '#1c1c1c';
+    check.style.background = 'transparent';
+    check.style.borderColor = '#2a2a2a';
+    check.textContent = '';
+  }
+  updateGroceryBtn();
+}
+
+function toggleExpand(i) {
+  const steps = document.getElementById(`steps-${i}`);
+  const btn = document.getElementById(`expbtn-${i}`);
+  const isHidden = steps.classList.contains('hidden');
+  steps.classList.toggle('hidden', !isHidden);
+  btn.textContent = isHidden ? '▲ hide steps' : '▼ show steps';
+}
+
+function updateGroceryBtn() {
+  const btn = document.getElementById('groceryBtn');
+  btn.textContent = `Grocery List (${selectedMeals.length} meals) →`;
+  btn.disabled = selectedMeals.length === 0;
+}
+
+// ─── GENERATE GROCERIES ───────────────────────────────────
+async function generateGroceries() {
+  clearError();
+  showScreen('screenGroceries');
+  document.getElementById('groceryLoader').classList.remove('hidden');
+  document.getElementById('groceryContent').classList.add('hidden');
+
+  try {
+    const chosen = currentMeals.filter((_,i) => selectedMeals.includes(i));
+    const parsed = await callClaude(
+      GROCERY_PROMPT,
+      `Grocery list for family of 4 for: ${chosen.map(m=>m.name).join(', ')}`
+    );
+    if (!parsed.walmart || !parsed.wholeFoods) throw new Error('Response missing store lists');
+    currentGroceries = parsed;
+    renderGroceries(parsed);
+  } catch(e) {
+    showError(e.message);
+    showScreen('screenPlanning');
+  }
+}
+
+function renderGroceries(g) {
+  const stores = [
+    { key: 'walmart', label: 'Walmart', sub: 'Pantry · packaged · dairy', color: '#0071ce' },
+    { key: 'wholeFoods', label: 'Whole Foods', sub: 'Fresh veg · fresh meat · herbs', color: '#00674b' },
+  ];
+  const grid = document.getElementById('storeGrid');
+  grid.innerHTML = stores.map(st => `
+    <div class="store-card" style="border-color:${st.color}30">
+      <div class="store-head">
+        <div>
+          <div class="store-name" style="color:${st.color}">${st.label}</div>
+          <div class="store-sub">${st.sub}</div>
+        </div>
+        <button class="copy-btn" style="border-color:${st.color}55;color:${st.color}" onclick="copyList('${st.key}','${st.label}',this)">Copy</button>
+      </div>
+      <ul class="item-list">
+        ${(g[st.key]||[]).map(item=>`<li><span class="item-dot" style="background:${st.color}"></span>${item}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+
+  document.getElementById('groceryLoader').classList.add('hidden');
+  document.getElementById('groceryContent').classList.remove('hidden');
+}
+
+function copyList(storeKey, storeName, btn) {
+  const items = (currentGroceries?.[storeKey] || []).join('\n');
+  navigator.clipboard.writeText(items).then(() => {
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  }).catch(() => {
+    // Fallback for Safari
+    const ta = document.createElement('textarea');
+    ta.value = items;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+</script>
+</body>
+</html>
