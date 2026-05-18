@@ -246,7 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('methodTags').innerHTML = availableMethods.map(m => `<span class="method-tag">${methodIcons[m]||'🍴'} ${m}</span>`).join('');
 
   // Check for API key
-  const key = localStorage.getItem('wt_api_key');
+  let key;
+  try { key = localStorage.getItem('wt_api_key'); } catch { key = null; }
   if (key) {
     showScreen('screenHome');
   } else {
@@ -263,7 +264,11 @@ function showScreen(id) {
   window.scrollTo(0,0);
 }
 
-function showSetup() { showScreen('screenSetup'); }
+function showSetup() {
+  const existing = getKey();
+  if (existing) document.getElementById('apiKeyInput').value = existing;
+  showScreen('screenSetup');
+}
 function showHistory() {
   renderHistory();
   showScreen('screenHistory');
@@ -276,12 +281,17 @@ function saveKey() {
     showError('That doesn\'t look like a valid Anthropic API key. It should start with sk-ant-');
     return;
   }
-  localStorage.setItem('wt_api_key', key);
+  try {
+    localStorage.setItem('wt_api_key', key);
+  } catch {
+    showError('Could not save the API key — your browser may be blocking local storage (e.g. private/incognito mode).');
+    return;
+  }
   showScreen('screenHome');
 }
 
 function getKey() {
-  return localStorage.getItem('wt_api_key') || '';
+  try { return localStorage.getItem('wt_api_key') || ''; } catch { return ''; }
 }
 
 // ─── MEAL HISTORY ─────────────────────────────────────────
@@ -354,15 +364,31 @@ async function callClaude(system, user) {
   const key = getKey();
   if (!key) { showError('No API key found. Please add your key in settings.'); throw new Error('No key'); }
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, system, messages: [{ role: 'user', content: user }] }),
-  });
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1500, system, messages: [{ role: 'user', content: user }] }),
+    });
+  } catch {
+    throw new Error('Network error — check your internet connection and try again.');
+  }
 
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`API error ${res.status}: ${body.slice(0,200)}`);
+    let errMsg = `API error ${res.status}`;
+    try {
+      const body = await res.json();
+      if (res.status === 401) errMsg = 'Invalid API key — go to API key settings and re-enter your key.';
+      else if (res.status === 429) errMsg = 'Rate limit reached — wait a moment and try again.';
+      else if (body?.error?.message) errMsg = body.error.message;
+    } catch {}
+    throw new Error(errMsg);
   }
 
   const data = await res.json();
