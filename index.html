@@ -91,17 +91,17 @@
   .sec-title { font-size: 1.2rem; font-weight: 400; margin-bottom: 4px; }
   .sec-note { font-family: var(--font-sans); font-size: 11px; color: #333; letter-spacing: 0.04em; }
 
-  /* STORE CARDS */
-  .store-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
-  @media(min-width: 560px) { .store-grid { grid-template-columns: 1fr 1fr; } }
-  .store-card { background: #0f0f0f; border: 1px solid; border-radius: 12px; overflow: hidden; }
-  .store-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid #161616; }
-  .store-name { font-family: var(--font-sans); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 2px; }
-  .store-sub { font-family: var(--font-sans); font-size: 10px; color: #333; }
-  .copy-btn { background: transparent; border: 1px solid; border-radius: 6px; padding: 6px 12px; font-family: var(--font-sans); font-size: 11px; cursor: pointer; }
-  .item-list { list-style: none; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .item-list li { font-family: var(--font-sans); font-size: 13px; color: #999; display: flex; align-items: center; gap: 10px; }
-  .item-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; opacity: 0.5; }
+  /* GROCERY LIST */
+  .grocery-controls { display: flex; gap: 8px; margin-bottom: 16px; }
+  .grocery-ctrl-btn { background: transparent; color: #555; border: 1px solid #1e1e1e; border-radius: 8px; padding: 8px 14px; font-family: var(--font-sans); font-size: 12px; cursor: pointer; }
+  .grocery-cat { margin-bottom: 22px; }
+  .grocery-cat-head { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: #444; padding-bottom: 8px; border-bottom: 1px solid #1e1e1e; margin-bottom: 2px; }
+  .grocery-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #161616; }
+  .grocery-item:last-child { border-bottom: none; }
+  .grocery-check { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--season); background: var(--season); color: #0c0c0c; font-size: 12px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s; }
+  .grocery-item.done .grocery-check { background: transparent; border-color: #2a2a2a; }
+  .grocery-text { font-family: var(--font-sans); font-size: 14px; color: #999; flex: 1; line-height: 1.4; }
+  .grocery-item.done .grocery-text { text-decoration: line-through; color: #333; }
 
   /* SETUP */
   .setup-note { font-family: var(--font-sans); font-size: 12px; color: #444; line-height: 1.6; margin-bottom: 16px; }
@@ -184,9 +184,14 @@
     <div id="groceryContent" class="hidden">
       <div class="sec-head">
         <div class="sec-title">Your grocery list</div>
-        <p class="sec-note">Copy and paste into your store's app</p>
+        <p class="sec-note">Tap items as you shop · copy checked to share</p>
       </div>
-      <div class="store-grid" id="storeGrid"></div>
+      <div class="grocery-controls">
+        <button class="grocery-ctrl-btn" onclick="uncheckAll()">Uncheck all</button>
+        <button class="grocery-ctrl-btn" onclick="checkAll()">Check all</button>
+      </div>
+      <div id="groceryList"></div>
+      <button class="btn-primary" id="copyCheckedBtn" onclick="copyChecked()" style="margin-bottom:12px;">Copy checked items</button>
       <div class="btn-row">
         <button class="btn-ghost" onclick="showScreen('screenPlanning')">← Back to meals</button>
         <button class="btn-ghost" onclick="showScreen('screenHome')">Start over</button>
@@ -233,6 +238,7 @@ let currentMeals = [];
 let selectedMeals = [];
 let expandedMeal = null;
 let currentGroceries = null;
+let uncheckedItems = new Set();
 
 // ─── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -453,9 +459,16 @@ Return this exact JSON (3-4 meals):
 }
 
 const GROCERY_PROMPT = `You are a grocery list assistant. Return ONLY a raw JSON object with no markdown, no backticks, no explanation.
-Walmart = pantry staples, canned goods, packaged goods, dairy, dry goods, condiments, spices.
-Whole Foods = fresh vegetables, fresh meat, fresh fish, fresh herbs, specialty fresh items.
-Return: {"walmart":["item (qty)"],"wholeFoods":["item (qty)"]}`;
+Organize every item into exactly these categories:
+- produce: fresh vegetables, fruits, fresh herbs
+- protein: all meats, poultry, fish, eggs
+- dairy: milk, cheese, butter, yogurt, cream, sour cream
+- pantry: canned goods, dry goods, pasta, rice, condiments, spices, oils, sauces, packaged goods, bread
+- other: anything that does not fit the above
+Return: {"produce":["item (qty)"],"protein":["item (qty)"],"dairy":["item (qty)"],"pantry":["item (qty)"],"other":["item (qty)"]}`;
+
+const GROCERY_CATS = ['produce','protein','dairy','pantry','other'];
+const GROCERY_LABELS = { produce:'Produce', protein:'Protein', dairy:'Dairy', pantry:'Pantry', other:'Other' };
 
 // ─── GENERATE MEAL PLAN ───────────────────────────────────
 async function generateMealPlan() {
@@ -595,7 +608,8 @@ async function generateGroceries() {
       GROCERY_PROMPT,
       `Grocery list for family of 4 for: ${chosen.map(m=>m.name).join(', ')}`
     );
-    if (!parsed.walmart || !parsed.wholeFoods) throw new Error('Response missing store lists');
+    if (!GROCERY_CATS.some(c => Array.isArray(parsed[c]))) throw new Error('Response missing grocery categories');
+    GROCERY_CATS.forEach(c => { if (!Array.isArray(parsed[c])) parsed[c] = []; });
     currentGroceries = parsed;
     renderGroceries(parsed);
   } catch(e) {
@@ -605,45 +619,83 @@ async function generateGroceries() {
 }
 
 function renderGroceries(g) {
-  const stores = [
-    { key: 'walmart', label: 'Walmart', sub: 'Pantry · packaged · dairy', color: '#0071ce' },
-    { key: 'wholeFoods', label: 'Whole Foods', sub: 'Fresh veg · fresh meat · herbs', color: '#00674b' },
-  ];
-  const grid = document.getElementById('storeGrid');
-  grid.innerHTML = stores.map(st => `
-    <div class="store-card" style="border-color:${st.color}30">
-      <div class="store-head">
-        <div>
-          <div class="store-name" style="color:${st.color}">${st.label}</div>
-          <div class="store-sub">${st.sub}</div>
-        </div>
-        <button class="copy-btn" style="border-color:${st.color}55;color:${st.color}" onclick="copyList('${st.key}','${st.label}',this)">Copy</button>
+  uncheckedItems = new Set();
+  const list = document.getElementById('groceryList');
+  list.innerHTML = GROCERY_CATS
+    .filter(cat => g[cat].length > 0)
+    .map(cat => `
+      <div class="grocery-cat">
+        <div class="grocery-cat-head">${GROCERY_LABELS[cat]}</div>
+        ${g[cat].map((item, i) => {
+          const id = `${cat}-${i}`;
+          return `<div class="grocery-item" id="gi-${id}">
+            <button class="grocery-check" onclick="toggleGroceryItem('${id}')">✓</button>
+            <span class="grocery-text">${item}</span>
+          </div>`;
+        }).join('')}
       </div>
-      <ul class="item-list">
-        ${(g[st.key]||[]).map(item=>`<li><span class="item-dot" style="background:${st.color}"></span>${item}</li>`).join('')}
-      </ul>
-    </div>
-  `).join('');
+    `).join('');
 
   document.getElementById('groceryLoader').classList.add('hidden');
   document.getElementById('groceryContent').classList.remove('hidden');
 }
 
-function copyList(storeKey, storeName, btn) {
-  const items = (currentGroceries?.[storeKey] || []).join('\n');
-  navigator.clipboard.writeText(items).then(() => {
+function toggleGroceryItem(id) {
+  const row = document.getElementById(`gi-${id}`);
+  const btn = row.querySelector('.grocery-check');
+  if (uncheckedItems.has(id)) {
+    uncheckedItems.delete(id);
+    row.classList.remove('done');
+    btn.textContent = '✓';
+  } else {
+    uncheckedItems.add(id);
+    row.classList.add('done');
+    btn.textContent = '';
+  }
+}
+
+function checkAll() {
+  uncheckedItems.clear();
+  document.querySelectorAll('.grocery-item').forEach(row => {
+    row.classList.remove('done');
+    row.querySelector('.grocery-check').textContent = '✓';
+  });
+}
+
+function uncheckAll() {
+  document.querySelectorAll('.grocery-item').forEach(row => {
+    const id = row.id.slice(3);
+    uncheckedItems.add(id);
+    row.classList.add('done');
+    row.querySelector('.grocery-check').textContent = '';
+  });
+}
+
+function copyChecked() {
+  const g = currentGroceries;
+  const lines = [];
+  GROCERY_CATS.forEach(cat => {
+    const items = (g[cat] || []).filter((_, i) => !uncheckedItems.has(`${cat}-${i}`));
+    if (items.length) {
+      lines.push(GROCERY_LABELS[cat].toUpperCase());
+      items.forEach(item => lines.push(`• ${item}`));
+      lines.push('');
+    }
+  });
+  const text = lines.join('\n').trim();
+  const btn = document.getElementById('copyCheckedBtn');
+  const writeText = () => {
     btn.textContent = '✓ Copied';
-    setTimeout(() => btn.textContent = 'Copy', 2000);
-  }).catch(() => {
-    // Fallback for Safari
+    setTimeout(() => { btn.textContent = 'Copy checked items'; }, 2000);
+  };
+  navigator.clipboard.writeText(text).then(writeText).catch(() => {
     const ta = document.createElement('textarea');
-    ta.value = items;
+    ta.value = text;
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    btn.textContent = '✓ Copied';
-    setTimeout(() => btn.textContent = 'Copy', 2000);
+    writeText();
   });
 }
 </script>
